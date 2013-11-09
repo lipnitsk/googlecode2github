@@ -38,10 +38,8 @@ def convert_file(proj_id, src_path, dst_dir):
     for i, line in enumerate(lines):
         if line.startswith("#"):
             meta_lines.append(line)
-        else:
-            assert not line.strip(), "line isn't empty in file %s %r" % (src_path, line)
-            # TODO is it actually mandatory that a blank line separate meta text from body text?
-            body_lines = lines[i+1:]
+	elif line.strip():
+            body_lines = lines[i:]
             break
     meta = {}
     for line in meta_lines:
@@ -58,6 +56,7 @@ def convert_file(proj_id, src_path, dst_dir):
     text = re.compile(r'^}}}+ *(\n|$)', re.M).sub(r"```\n", text)
 
     # TODO: Add support for `backtick` code quotes
+    text = re.sub(r'{{{(.*?)}}}', r'`\1`', text)
     
     # Headings.
     text = re.compile(r'^===(.*?)===\s*$', re.M).sub(lambda m: "### %s\n"%m.group(1).strip(), text)
@@ -131,12 +130,11 @@ def convert_file(proj_id, src_path, dst_dir):
 #---- internal support stuff
 
 def _indent(text):
-    return '    ' + '\n    '.join(text.splitlines(False))
+    return '\n    ' + '\n    '.join(text.splitlines(False))
 
 def _gh_page_name_from_gc_page_name(gc):
     """Github (gh) Wiki page name from Google Code (gc) Wiki page name."""
-    # FIXME: fails on all uppercase / all lowercase names (e.g. FAQ)
-    gh = re.sub(r'([A-Z][a-z]+)', r'-\1', gc)[1:]
+    gh = re.sub(r'([A-Za-z]+)_?', r'-\1', gc)[1:]
     return gh
 
 
